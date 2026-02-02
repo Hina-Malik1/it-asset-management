@@ -1,74 +1,47 @@
-\# 💻 IT Asset Management System
+# **IT Asset Management System**
 
 
 
-\*\*Live Demo:\*\* \[https://it-asset-management-frontend.onrender.com](https://it-asset-management-frontend.onrender.com)  
+Live Demo: https://it-asset-management-frontend.onrender.com  
 
-\*\*Login Credentials:\*\*  
-
-🧑‍💻 Email: `admin@company.com`  
-
-🔐 Password: `admin123`
+Login: admin@company.com 
+Password: admin123
 
 
 
+
+
+**Features**
+
+---
+
+* Login + Dashboard
+* Add/View/Delete assets (MacBook + Monitor in DB)  
+* Assign assets to employees
+* Cyber Operations dark theme
+
+  
+
+
+
+**Tech Stack**
+
+---
+
+* Frontend: React.js + Bootstrap 5
+* Backend: Node.js + Express + MongoDB Atlas
+* Deployment: Render.com (free)
+  
+
+
+**Quick Start**
 ---
 
 
 
-\## ✨ Features
-
-
-
-\- ✅ Secure login and authentication (JWT + bcrypt)
-
-\- ✅ Interactive dashboard with live asset statistics
-
-\- ✅ Add, view, and delete assets (e.g. MacBook Pro, Dell Monitor)
-
-\- ✅ Assign assets to employees
-
-\- ✅ Professional "Cyber Operations" dark theme UI
-
-
+Backend
 
 ---
-
-
-
-\## 🛠️ Tech Stack
-
-
-
-\- \*\*Frontend:\*\* React + Bootstrap 5  
-
-\- \*\*Backend:\*\* Node.js + Express + MongoDB Atlas  
-
-\- \*\*Authentication:\*\* JWT + bcrypt  
-
-\- \*\*Deployment:\*\* Render.com (free tier)
-
-
-
----
-
-
-
-\## 🚀 Quick Start (Local Setup)
-
-
-
-\### 1️⃣ Clone the repository
-
-```bash
-
-git clone https://github.com/Hina-Malik1/it-asset-management.git
-
-cd it-asset-management
-
-2️⃣ Run the backend
-
-bash
 
 cd backend
 
@@ -76,40 +49,30 @@ npm install
 
 npm run dev
 
-3️⃣ Run the frontend
 
-bash
 
-cd ../frontend
+Frontend
+
+---
 
 npm install
 
 npm start
 
 
-📱 Login Details
 
 
-Email: admin@company.com
+**Live URLs**
 
-Password: admin123
+---
 
-
-
-Default admin credentials for testing and demo purposes only.
+Frontend: https://it-asset-management-frontend.onrender.com
 
 
 
-🔗 Live URLs
-
-
-🌐 Frontend: https://it-asset-management-frontend.onrender.com
+Backend: https://it-asset-management-backend.onrender.com
 
 
 
-⚙️ Backend API: https://it-asset-management-backend.onrender.com
-
-
-
-💾 GitHub: https://github.com/Hina-Malik1/it-asset-management
+API Test: https://it-asset-management-backend.onrender.com/api/assets
 
