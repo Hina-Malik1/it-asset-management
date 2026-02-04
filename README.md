@@ -2,7 +2,7 @@
 
 
 
-Live Demo: https://it-asset-management-frontend.onrender.com  
+Live Demo: https://it-asset-management-frontend-5la5.onrender.com
 
 Login: admin@company.com 
 
@@ -80,7 +80,7 @@ npm start
 
 
 
-Frontend: https://it-asset-management-frontend.onrender.com
+Frontend: https://it-asset-management-frontend-5la5.onrender.com
 
 
 
