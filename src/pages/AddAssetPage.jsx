@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaSave, FaTimes, FaArrowLeft } from 'react-icons/fa';
+import { FaSave, FaTimes, FaArrowLeft, FaCheckCircle } from 'react-icons/fa';
 import { createAsset } from '../services/api';
 
 function AddAssetPage() {
@@ -13,34 +13,52 @@ function AddAssetPage() {
     purchasePrice: '',
     status: 'Available',
     condition: 'New',
+    warrantyDate: '',   // ✅ now tracked in state
     description: ''
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    await createAsset(formData);
-    alert('Asset created successfully!');
-    navigate('/assets');
-  } catch (err) {
-    console.error('Error creating asset:', err);
-    alert('Error creating asset');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    try {
+      await createAsset(formData);
+      setSuccess(true);
+      // After 1.5 seconds, go to assets list
+      setTimeout(() => navigate('/assets'), 1500);
+    } catch (err) {
+      console.error('Error creating asset:', err);
+      setError('Failed to save asset. Please check all fields and try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Show success message while redirecting
+  if (success) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="text-center">
+          <FaCheckCircle size={60} style={{ color: '#00FF94', marginBottom: '16px' }} />
+          <h4 style={{ color: '#E4E7EB', fontFamily: 'JetBrains Mono' }}>ASSET_SAVED</h4>
+          <p style={{ color: '#9CA3AF' }}>Redirecting to asset list...</p>
+        </div>
+      </div>
+    );
   }
-};
 
   return (
     <div className="min-vh-100">
-      {/* Navigation */}
-      <nav className="navbar navbar-dark">
+      <nav className="navbar navbar-dark sticky-top">
         <div className="container-fluid px-4">
-          <span className="navbar-brand fw-bold" style={{fontFamily: 'JetBrains Mono', color: '#00FF94'}}>
+          <span className="navbar-brand fw-bold" style={{ fontFamily: 'JetBrains Mono', color: '#00FF94' }}>
             ADD_ASSET
           </span>
           <button onClick={() => navigate('/assets')} className="btn btn-outline-light d-flex align-items-center gap-2">
@@ -50,45 +68,25 @@ function AddAssetPage() {
         </div>
       </nav>
 
-      {/* Main Content */}
-      <div className="container py-4" style={{maxWidth: '800px'}}>
+      <div className="container py-4" style={{ maxWidth: '800px' }}>
         <div className="card">
           <div className="card-body p-4">
-            <h3 className="fw-bold mb-4" style={{
-              fontFamily: 'JetBrains Mono',
-              color: '#E4E7EB',
-              textTransform: 'uppercase',
-              letterSpacing: '1px'
-            }}>
+            <h3 className="fw-bold mb-4" style={{ fontFamily: 'JetBrains Mono', color: '#E4E7EB', textTransform: 'uppercase', letterSpacing: '1px' }}>
               ASSET_REGISTRATION
             </h3>
 
+            {error && <div className="alert alert-danger">{error}</div>}
+
             <form onSubmit={handleSubmit}>
               <div className="row g-4">
-                {/* Asset Name */}
                 <div className="col-md-6">
-                  <label className="form-label">ASSET NAME</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="assetName"
-                    value={formData.assetName}
-                    onChange={handleChange}
-                    placeholder="e.g., Dell Laptop XPS 15"
-                    required
-                  />
+                  <label className="form-label">ASSET NAME *</label>
+                  <input type="text" className="form-control" name="assetName" value={formData.assetName} onChange={handleChange} placeholder="e.g., Dell Laptop XPS 15" required />
                 </div>
 
-                {/* Asset Type */}
                 <div className="col-md-6">
-                  <label className="form-label">ASSET TYPE</label>
-                  <select
-                    className="form-select"
-                    name="assetType"
-                    value={formData.assetType}
-                    onChange={handleChange}
-                    required
-                  >
+                  <label className="form-label">ASSET TYPE *</label>
+                  <select className="form-select" name="assetType" value={formData.assetType} onChange={handleChange} required>
                     <option value="">SELECT_TYPE</option>
                     <option value="Laptop">LAPTOP</option>
                     <option value="Monitor">MONITOR</option>
@@ -98,61 +96,27 @@ function AddAssetPage() {
                   </select>
                 </div>
 
-                {/* Serial Number */}
                 <div className="col-md-6">
-                  <label className="form-label">SERIAL NUMBER</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="serialNumber"
-                    value={formData.serialNumber}
-                    onChange={handleChange}
-                    placeholder="e.g., DL-2024-001"
-                    required
-                    style={{fontFamily: 'JetBrains Mono'}}
-                  />
+                  <label className="form-label">SERIAL NUMBER *</label>
+                  <input type="text" className="form-control" name="serialNumber" value={formData.serialNumber} onChange={handleChange} placeholder="e.g., DL-2024-001" required style={{ fontFamily: 'JetBrains Mono' }} />
                 </div>
 
-                {/* Purchase Date */}
                 <div className="col-md-6">
-                  <label className="form-label">PURCHASE DATE</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    name="purchaseDate"
-                    value={formData.purchaseDate}
-                    onChange={handleChange}
-                    required
-                  />
+                  <label className="form-label">PURCHASE DATE *</label>
+                  <input type="date" className="form-control" name="purchaseDate" value={formData.purchaseDate} onChange={handleChange} required />
                 </div>
 
-                {/* Purchase Price */}
                 <div className="col-md-6">
                   <label className="form-label">PURCHASE PRICE</label>
                   <div className="input-group">
-                    <span className="input-group-text">$</span>
-                    <input
-                      type="number"
-                      className="form-control"
-                      name="purchasePrice"
-                      value={formData.purchasePrice}
-                      onChange={handleChange}
-                      placeholder="0.00"
-                      style={{borderLeft: 'none'}}
-                    />
+                    <span className="input-group-text">£</span>
+                    <input type="number" className="form-control" name="purchasePrice" value={formData.purchasePrice} onChange={handleChange} placeholder="0.00" min="0" style={{ borderLeft: 'none' }} />
                   </div>
                 </div>
 
-                {/* Status */}
                 <div className="col-md-6">
-                  <label className="form-label">STATUS</label>
-                  <select
-                    className="form-select"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    required
-                  >
+                  <label className="form-label">STATUS *</label>
+                  <select className="form-select" name="status" value={formData.status} onChange={handleChange} required>
                     <option value="Available">AVAILABLE</option>
                     <option value="In Use">IN_USE</option>
                     <option value="Damaged">DAMAGED</option>
@@ -161,16 +125,9 @@ function AddAssetPage() {
                   </select>
                 </div>
 
-                {/* Condition */}
                 <div className="col-md-6">
-                  <label className="form-label">CONDITION</label>
-                  <select
-                    className="form-select"
-                    name="condition"
-                    value={formData.condition}
-                    onChange={handleChange}
-                    required
-                  >
+                  <label className="form-label">CONDITION *</label>
+                  <select className="form-select" name="condition" value={formData.condition} onChange={handleChange} required>
                     <option value="New">NEW</option>
                     <option value="Good">GOOD</option>
                     <option value="Fair">FAIR</option>
@@ -178,39 +135,26 @@ function AddAssetPage() {
                   </select>
                 </div>
 
-                {/* Warranty End Date */}
+                {/* ✅ WARRANTY DATE — now properly connected to formData */}
                 <div className="col-md-6">
-                  <label className="form-label">WARRANTY END</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    name="warrantyDate"
-                  />
+                  <label className="form-label">WARRANTY END DATE</label>
+                  <input type="date" className="form-control" name="warrantyDate" value={formData.warrantyDate} onChange={handleChange} />
                 </div>
 
-                {/* Description */}
                 <div className="col-12">
                   <label className="form-label">DESCRIPTION / NOTES</label>
-                  <textarea
-                    className="form-control"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows="4"
-                    placeholder="Additional information about this asset..."
-                  ></textarea>
+                  <textarea className="form-control" name="description" value={formData.description} onChange={handleChange} rows="3" placeholder="Additional information about this asset..."></textarea>
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="d-flex justify-content-end gap-3 mt-4">
                 <button type="button" onClick={() => navigate('/assets')} className="btn btn-outline-secondary d-flex align-items-center gap-2">
                   <FaTimes />
                   <span>CANCEL</span>
-                </button> 
-                <button type="submit" className="btn btn-primary d-flex align-items-center gap-2">
+                </button>
+                <button type="submit" disabled={submitting} className="btn btn-primary d-flex align-items-center gap-2">
                   <FaSave />
-                  <span>SAVE_ASSET</span>
+                  <span>{submitting ? 'SAVING...' : 'SAVE_ASSET'}</span>
                 </button>
               </div>
             </form>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBox, FaCheckCircle, FaTools, FaExclamationTriangle, FaPlus, FaUserPlus, FaChartBar, FaBell, FaUser, FaPowerOff } from 'react-icons/fa';
-import { getAssets, getHistory } from '../services/api';
+import { FaBox, FaCheckCircle, FaTools, FaExclamationTriangle, FaPlus, FaUserPlus, FaChartBar, FaBell, FaUser, FaPowerOff, FaList, FaUsers } from 'react-icons/fa';
+import { getAssets, getHistory, logout } from '../services/api';
 
 function Dashboard() {
     const navigate = useNavigate();
@@ -12,6 +12,7 @@ function Dashboard() {
     const [damagedCount, setDamagedCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [recentActivities, setRecentActivities] = useState([]);
+    const [assetTypeBreakdown, setAssetTypeBreakdown] = useState([]);
 
     useEffect(() => {
         fetchAssetCounts();
@@ -25,6 +26,15 @@ function Dashboard() {
             setAvailableCount(assets.filter(a => a.status === 'Available').length);
             setInUseCount(assets.filter(a => a.status === 'In Use').length);
             setDamagedCount(assets.filter(a => a.status === 'Damaged').length);
+
+            // Build real type breakdown
+            const typeCounts = {};
+            assets.forEach(a => {
+                const t = a.assetType || 'Other';
+                typeCounts[t] = (typeCounts[t] || 0) + 1;
+            });
+            const breakdown = Object.entries(typeCounts).map(([type, count]) => ({ type, count }));
+            setAssetTypeBreakdown(breakdown);
         } catch (err) {
             console.error('Error fetching asset counts:', err);
         } finally {
@@ -61,21 +71,20 @@ function Dashboard() {
         return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
     };
 
+    const handleLogout = () => {
+        logout();
+        navigate('/');
+    };
+
+    // Type color map
+    const typeColors = ['#00FF94', '#3B82F6', '#F59E0B', '#9CA3AF', '#FF6B35', '#A78BFA'];
+
     return (
         <div className="min-vh-100">
             <nav className="navbar navbar-expand-lg navbar-dark sticky-top">
                 <div className="container-fluid px-4">
                     <span className="navbar-brand mb-0 h1 fw-bold d-flex align-items-center">
-                        <div style={{
-                            width: '32px',
-                            height: '32px',
-                            background: 'linear-gradient(135deg, #00FF94, #00CC75)',
-                            borderRadius: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginRight: '12px'
-                        }}>
+                        <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #00FF94, #00CC75)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '12px' }}>
                             <FaBox color="#0B0E14" size={18} />
                         </div>
                         <span style={{ fontFamily: 'JetBrains Mono', color: '#00FF94' }}>ASSET_CONTROL</span>
@@ -83,7 +92,9 @@ function Dashboard() {
                     <div className="d-flex align-items-center gap-3">
                         <button className="btn btn-outline-light position-relative" onClick={() => navigate('/history')}>
                             <FaBell />
-                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill" style={{ backgroundColor: '#FF6B35' }}>3</span>
+                            {recentActivities.length > 0 && (
+                                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill" style={{ backgroundColor: '#FF6B35' }}>{recentActivities.length}</span>
+                            )}
                         </button>
                         <div className="dropdown">
                             <button className="btn btn-outline-light dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown">
@@ -91,15 +102,9 @@ function Dashboard() {
                                 <span>ADMIN</span>
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); alert('Profile Settings - Coming in Phase 2'); }}>Profile Settings</a>
-                                </li>
-                                <li>
-                                    <a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); alert('System Config - Coming in Phase 2'); }}>System Config</a>
-                                </li>
                                 <li><hr className="dropdown-divider" /></li>
                                 <li>
-                                    <a className="dropdown-item text-danger d-flex align-items-center gap-2" href="#" onClick={(e) => { e.preventDefault(); navigate('/'); }}>
+                                    <a className="dropdown-item text-danger d-flex align-items-center gap-2" href="#" onClick={(e) => { e.preventDefault(); handleLogout(); }}>
                                         <FaPowerOff /> Terminate Session
                                     </a>
                                 </li>
@@ -117,10 +122,8 @@ function Dashboard() {
                             {'>'} System operational | All assets monitored
                         </p>
                     </div>
-                    <div className="d-flex align-items-center gap-3">
-                        <div style={{ color: '#9CA3AF', fontSize: '12px', fontFamily: 'JetBrains Mono' }}>
-                            LAST_SYNC: <span style={{ color: '#00FF94' }}>LIVE</span>
-                        </div>
+                    <div style={{ color: '#9CA3AF', fontSize: '12px', fontFamily: 'JetBrains Mono' }}>
+                        LAST_SYNC: <span style={{ color: '#00FF94' }}>LIVE</span>
                     </div>
                 </div>
 
@@ -206,7 +209,19 @@ function Dashboard() {
                                         </button>
                                     </div>
                                     <div className="col-md-4">
-                                        <button onClick={() => navigate('/assign')} className="btn btn-success w-100 py-3 d-flex flex-column align-items-center gap-2">
+                                        <button onClick={() => navigate('/assets')} className="btn w-100 py-3 d-flex flex-column align-items-center gap-2" style={{ background: 'rgba(0,255,148,0.15)', border: '1px solid #00FF94', color: '#00FF94' }}>
+                                            <FaList size={24} />
+                                            <span className="fw-semibold" style={{ fontFamily: 'JetBrains Mono' }}>VIEW_ASSETS</span>
+                                        </button>
+                                    </div>
+                                    <div className="col-md-4">
+                                        <button onClick={() => navigate('/employees')} className="btn btn-success w-100 py-3 d-flex flex-column align-items-center gap-2">
+                                            <FaUsers size={24} />
+                                            <span className="fw-semibold" style={{ fontFamily: 'JetBrains Mono' }}>EMPLOYEES</span>
+                                        </button>
+                                    </div>
+                                    <div className="col-md-4">
+                                        <button onClick={() => navigate('/assign')} className="btn btn-outline-info w-100 py-3 d-flex flex-column align-items-center gap-2">
                                             <FaUserPlus size={24} />
                                             <span className="fw-semibold" style={{ fontFamily: 'JetBrains Mono' }}>ASSIGN</span>
                                         </button>
@@ -222,99 +237,81 @@ function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Asset Distribution */}
+                    {/* Asset Distribution — REAL DATA */}
                     <div className="col-lg-4">
                         <div className="card">
                             <div className="card-body p-4">
                                 <h5 className="fw-bold mb-4" style={{ fontFamily: 'JetBrains Mono', color: '#E4E7EB', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '14px' }}>ASSET_DISTRIBUTION</h5>
-                                <div className="mb-4">
-                                    <div className="d-flex justify-content-between mb-2">
-                                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: '#E4E7EB' }}>LAPTOPS</span>
-                                        <span className="fw-semibold" style={{ color: '#00FF94', fontFamily: 'JetBrains Mono' }}>60</span>
-                                    </div>
-                                    <div className="progress" style={{ height: '6px' }}>
-                                        <div className="progress-bar" style={{ width: '40%', background: '#00FF94' }}></div>
-                                    </div>
-                                </div>
-                                <div className="mb-4">
-                                    <div className="d-flex justify-content-between mb-2">
-                                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: '#E4E7EB' }}>MONITORS</span>
-                                        <span className="fw-semibold" style={{ color: '#3B82F6', fontFamily: 'JetBrains Mono' }}>45</span>
-                                    </div>
-                                    <div className="progress" style={{ height: '6px' }}>
-                                        <div className="progress-bar" style={{ width: '30%', background: '#3B82F6' }}></div>
-                                    </div>
-                                </div>
-                                <div className="mb-4">
-                                    <div className="d-flex justify-content-between mb-2">
-                                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: '#E4E7EB' }}>LICENSES</span>
-                                        <span className="fw-semibold" style={{ color: '#F59E0B', fontFamily: 'JetBrains Mono' }}>30</span>
-                                    </div>
-                                    <div className="progress" style={{ height: '6px' }}>
-                                        <div className="progress-bar" style={{ width: '20%', background: '#F59E0B' }}></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="d-flex justify-content-between mb-2">
-                                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: '#E4E7EB' }}>PERIPHERALS</span>
-                                        <span className="fw-semibold" style={{ color: '#9CA3AF', fontFamily: 'JetBrains Mono' }}>15</span>
-                                    </div>
-                                    <div className="progress" style={{ height: '6px' }}>
-                                        <div className="progress-bar" style={{ width: '10%', background: '#9CA3AF' }}></div>
-                                    </div>
-                                </div>
+                                {loading ? (
+                                    <p style={{ color: '#9CA3AF', fontFamily: 'JetBrains Mono', fontSize: '13px' }}>Loading...</p>
+                                ) : assetTypeBreakdown.length === 0 ? (
+                                    <p style={{ color: '#9CA3AF', fontFamily: 'JetBrains Mono', fontSize: '13px' }}>No assets in system yet.</p>
+                                ) : (
+                                    assetTypeBreakdown.map(({ type, count }, i) => (
+                                        <div className="mb-4" key={type}>
+                                            <div className="d-flex justify-content-between mb-2">
+                                                <span style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: '#E4E7EB' }}>{type.toUpperCase()}</span>
+                                                <span className="fw-semibold" style={{ color: typeColors[i % typeColors.length], fontFamily: 'JetBrains Mono' }}>{count}</span>
+                                            </div>
+                                            <div className="progress" style={{ height: '6px' }}>
+                                                <div className="progress-bar" style={{ width: `${(count / totalAssets) * 100}%`, background: typeColors[i % typeColors.length] }}></div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
 
-                        {/* System Alerts */}
-                        <div className="card mt-4">
-                            <div className="card-body p-4">
-                                <h5 className="fw-bold mb-4" style={{ fontFamily: 'JetBrains Mono', color: '#E4E7EB', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '14px' }}>SYSTEM_ALERTS</h5>
-                                <div className="alert alert-warning mb-3" role="alert">
-                                    <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', fontWeight: 'bold' }}>⚠ LOW_STOCK</div>
-                                    <small>Only 5 laptops available for deployment</small>
-                                </div>
-                                <div className="alert alert-danger mb-0" role="alert">
-                                    <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', fontWeight: 'bold' }}>🔧 MAINTENANCE_DUE</div>
-                                    <small>10 assets require immediate servicing</small>
+                        {/* System Alerts — REAL DATA ONLY */}
+                        {damagedCount > 0 && (
+                            <div className="card mt-4">
+                                <div className="card-body p-4">
+                                    <h5 className="fw-bold mb-4" style={{ fontFamily: 'JetBrains Mono', color: '#E4E7EB', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '14px' }}>SYSTEM_ALERTS</h5>
+                                    <div className="alert alert-danger mb-0" role="alert">
+                                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', fontWeight: 'bold' }}>⚠ DAMAGED_ASSETS</div>
+                                        <small>{damagedCount} asset{damagedCount > 1 ? 's' : ''} marked as damaged and may need attention.</small>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Activity Log — now uses real history data */}
+                {/* Activity Log */}
                 <div className="row mt-4">
                     <div className="col-12">
                         <div className="card">
                             <div className="card-body p-4">
-                                <h5 className="fw-bold mb-4" style={{ fontFamily: 'JetBrains Mono', color: '#E4E7EB', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '14px' }}>ACTIVITY_LOG</h5>
+                                <div className="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 className="fw-bold mb-0" style={{ fontFamily: 'JetBrains Mono', color: '#E4E7EB', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '14px' }}>ACTIVITY_LOG</h5>
+                                    <button onClick={() => navigate('/history')} className="btn btn-sm btn-outline-primary" style={{ fontFamily: 'JetBrains Mono', fontSize: '11px' }}>VIEW_ALL</button>
+                                </div>
 
-                                {recentActivities.length === 0 && (
+                                {recentActivities.length === 0 ? (
                                     <p style={{ color: '#9CA3AF', fontFamily: 'JetBrains Mono', fontSize: '13px' }}>
                                         No recent activity. Start by adding an asset to see logs here.
                                     </p>
-                                )}
-
-                                <div className="list-group list-group-flush">
-                                    {recentActivities.map((activity) => (
-                                        <div key={activity._id} className="list-group-item px-0 py-3">
-                                            <div className="d-flex justify-content-between align-items-start">
-                                                <div className="d-flex gap-3">
-                                                    <div style={{ width: '4px', backgroundColor: getActivityColor(activity.action), borderRadius: '2px' }}></div>
-                                                    <div>
-                                                        <h6 className="fw-semibold mb-1" style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: getActivityColor(activity.action) }}>
-                                                            {activity.action}
-                                                        </h6>
-                                                        <p className="mb-1" style={{ color: '#E4E7EB' }}>{activity.assetName || 'Unknown Asset'}</p>
-                                                        <small style={{ color: '#9CA3AF', fontFamily: 'JetBrains Mono', fontSize: '11px' }}>by {activity.performedBy}</small>
+                                ) : (
+                                    <div className="list-group list-group-flush">
+                                        {recentActivities.map((activity) => (
+                                            <div key={activity._id} className="list-group-item px-0 py-3">
+                                                <div className="d-flex justify-content-between align-items-start">
+                                                    <div className="d-flex gap-3">
+                                                        <div style={{ width: '4px', backgroundColor: getActivityColor(activity.action), borderRadius: '2px' }}></div>
+                                                        <div>
+                                                            <h6 className="fw-semibold mb-1" style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: getActivityColor(activity.action) }}>
+                                                                {activity.action}
+                                                            </h6>
+                                                            <p className="mb-1" style={{ color: '#E4E7EB' }}>{activity.assetName || 'Unknown Asset'}</p>
+                                                            <small style={{ color: '#9CA3AF', fontFamily: 'JetBrains Mono', fontSize: '11px' }}>by {activity.performedBy}</small>
+                                                        </div>
                                                     </div>
+                                                    <small style={{ color: '#9CA3AF', fontFamily: 'JetBrains Mono', fontSize: '11px' }}>{getTimeAgo(activity.createdAt)}</small>
                                                 </div>
-                                                <small style={{ color: '#9CA3AF', fontFamily: 'JetBrains Mono', fontSize: '11px' }}>{getTimeAgo(activity.createdAt)}</small>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

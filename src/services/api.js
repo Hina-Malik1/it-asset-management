@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://it-asset-management-backend.onrender.com/api';
-
+const API_URL = 'http://localhost:5000/api';
 
 // ─── AUTH APIs ───────────────────────────────────────────────
 
@@ -34,6 +33,15 @@ export const getAssets = async () => {
   return response.data;
 };
 
+// ✅ NEW — fetch previously deleted assets
+export const getDeletedAssets = async () => {
+  const token = localStorage.getItem('token');
+  const response = await axios.get(`${API_URL}/assets/deleted`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};
+
 export const createAsset = async (assetData) => {
   const token = localStorage.getItem('token');
   const response = await axios.post(`${API_URL}/assets`, assetData, {
@@ -45,6 +53,15 @@ export const createAsset = async (assetData) => {
 export const updateAsset = async (id, assetData) => {
   const token = localStorage.getItem('token');
   const response = await axios.put(`${API_URL}/assets/${id}`, assetData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};
+
+// ✅ NEW — restore a deleted asset back to active
+export const restoreAsset = async (id) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.put(`${API_URL}/assets/restore/${id}`, {}, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return response.data;
@@ -84,7 +101,6 @@ export const deleteEmployee = async (id) => {
 
 // ─── ASSIGNMENT APIs ─────────────────────────────────────────
 
-// Creates a new assignment (asset → employee)
 export const createAssignment = async (assignmentData) => {
   const token = localStorage.getItem('token');
   const response = await axios.post(`${API_URL}/assignments`, assignmentData, {
@@ -93,7 +109,6 @@ export const createAssignment = async (assignmentData) => {
   return response.data;
 };
 
-// Gets all assignments
 export const getAssignments = async () => {
   const token = localStorage.getItem('token');
   const response = await axios.get(`${API_URL}/assignments`, {
@@ -102,7 +117,6 @@ export const getAssignments = async () => {
   return response.data;
 };
 
-// Returns an asset (marks assignment as Returned)
 export const returnAsset = async (assignmentId) => {
   const token = localStorage.getItem('token');
   const response = await axios.put(`${API_URL}/assignments/return/${assignmentId}`, {}, {
@@ -113,7 +127,6 @@ export const returnAsset = async (assignmentId) => {
 
 // ─── HISTORY APIs ────────────────────────────────────────────
 
-// Gets the full audit trail
 export const getHistory = async () => {
   const token = localStorage.getItem('token');
   const response = await axios.get(`${API_URL}/history`, {

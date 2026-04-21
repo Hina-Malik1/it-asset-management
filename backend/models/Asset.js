@@ -1,27 +1,15 @@
 const mongoose = require('mongoose');
 
 const assetSchema = new mongoose.Schema({
-  assetName: {
-    type: String,
-    required: true
-  },
+  assetName: { type: String, required: true },
   assetType: {
     type: String,
     required: true,
     enum: ['Laptop', 'Monitor', 'License', 'Peripheral', 'Other']
   },
-  serialNumber: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  purchaseDate: {
-    type: Date,
-    required: true
-  },
-  purchasePrice: {
-    type: Number
-  },
+  serialNumber: { type: String, required: true, unique: true },
+  purchaseDate: { type: Date, required: true },
+  purchasePrice: { type: Number },
   status: {
     type: String,
     enum: ['Available', 'In Use', 'Damaged', 'Maintenance', 'Retired'],
@@ -37,12 +25,13 @@ const assetSchema = new mongoose.Schema({
     ref: 'Employee',
     default: null
   },
-  warrantyDate: {
-    type: Date
-  },
-  description: {
-    type: String
-  }
+  warrantyDate: { type: Date },
+  description: { type: String },
+
+  // ✅ NEW — soft delete fields
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null }
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Asset', assetSchema);

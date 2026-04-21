@@ -1,12 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const Asset = require('../models/Asset');
-const History = require('../models/History');  // NEW — needed to log actions
+const History = require('../models/History');
 
-// Get all assets
+// Get all ACTIVE assets (not deleted)
+// $ne: true catches both isDeleted: false AND assets that existed before this field was added
 router.get('/', async (req, res) => {
   try {
-    const assets = await Asset.find().populate('assignedTo');
+    const assets = await Asset.find({ isDeleted: { $ne: true } }).populate('assignedTo');
+    res.json(assets);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ✅ NEW — Get all DELETED (previous) assets
+router.get('/deleted', async (req, res) => {
+  try {
+    const assets = await Asset.find({ isDeleted: true }).populate('assignedTo');
     res.json(assets);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -23,13 +34,11 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create asset — NOW LOGS TO HISTORY
+// Create asset
 router.post('/', async (req, res) => {
   const asset = new Asset(req.body);
   try {
     const newAsset = await asset.save();
-
-    // Log this creation to the History (audit trail)
     const historyEntry = new History({
       action: 'ASSET_CREATED',
       asset: newAsset._id,
@@ -38,10 +47,35 @@ router.post('/', async (req, res) => {
       details: `New ${newAsset.assetType} added to inventory (Serial: ${newAsset.serialNumber})`
     });
     await historyEntry.save();
-
     res.status(201).json(newAsset);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+// ✅ NEW — Restore a previously deleted asset
+router.put('/restore/:id', async (req, res) => {
+  try {
+    const asset = await Asset.findById(req.params.id);
+    if (!asset) return res.status(404).json({ message: 'Asset not found' });
+
+    await Asset.findByIdAndUpdate(req.params.id, {
+      isDeleted: false,
+      deletedAt: null
+    });
+
+    const historyEntry = new History({
+      action: 'ASSET_CREATED',
+      asset: asset._id,
+      assetName: asset.assetName,
+      performedBy: 'Admin',
+      details: `${asset.assetType} restored back to active inventory (Serial: ${asset.serialNumber})`
+    });
+    await historyEntry.save();
+
+    res.json({ message: 'Asset restored successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
@@ -55,16 +89,13 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete asset — NOW LOGS TO HISTORY
+// ✅ UPDATED — Soft delete (marks as deleted, keeps in database)
 router.delete('/:id', async (req, res) => {
   try {
-    // We need to find the asset FIRST so we can grab its name before deleting it
     const asset = await Asset.findById(req.params.id);
-    if (!asset) {
-      return res.status(404).json({ message: 'Asset not found' });
-    }
+    if (!asset) return res.status(404).json({ message: 'Asset not found' });
 
-    // Log this deletion to History BEFORE we delete it (so we still have the name)
+    // Log to history first
     const historyEntry = new History({
       action: 'ASSET_DELETED',
       asset: asset._id,
@@ -74,9 +105,13 @@ router.delete('/:id', async (req, res) => {
     });
     await historyEntry.save();
 
-    // Now actually delete the asset
-    await Asset.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Asset deleted' });
+    // Mark as deleted instead of removing from database
+    await Asset.findByIdAndUpdate(req.params.id, {
+      isDeleted: true,
+      deletedAt: new Date()
+    });
+
+    res.json({ message: 'Asset archived successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
